@@ -26,17 +26,62 @@ def sitemap():
     return generate_sitemap(app)
 
 @app.route('/members', methods=['GET'])
-def handle_hello():
+def get_members():
+    try:
+        # this is how you can use the Family datastructure by calling its methods
+        members = jackson_family.get_all_members()
 
-    # this is how you can use the Family datastructure by calling its methods
-    members = jackson_family.get_all_members()
-    response_body = {
-        "hello": "world",
-        "family": members
-    }
+        if members == []:
+            return jsonify({"msg": "Members not found"}), 400
+        else:
+            return jsonify(members), 200
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
-    return jsonify(response_body), 200
+@app.route('/member/<int:member_id>', methods=['GET'])
+def get_member(member_id):
+    try:
+        member = jackson_family.get_member(member_id)
+
+        if member is None:
+            return jsonify({"error": "Member not found"}), 400
+        else:
+            return jsonify(member), 200
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
+@app.route('/member', methods=['POST'])
+def add_member():
+    try:
+        new_member = request.get_json()
+
+        if not new_member:
+            return jsonify({"error": "Invalid input"}), 400
+        else:
+
+            updated_members = jackson_family.add_member(new_member)
+            return jsonify(updated_members), 200
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
+@app.route('/member/<int:member_id>', methods=['DELETE'])
+def delete_member(member_id):
+    try:
+        delete_member = jackson_family.delete_member(member_id)
+
+        if not delete_member:
+            return jsonify({"error": "Member not found"}), 400
+        else:
+            return jsonify({'done':True}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
